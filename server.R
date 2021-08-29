@@ -7,7 +7,8 @@
 pacotes <- c (
   'shiny',
   'shinyjs',
-  'ggplot2'
+  'ggplot2',
+  'rdrop2'
 )
 
 lapply(
@@ -19,9 +20,25 @@ lapply(
 rm(pacotes)
 
 # caso seja no shinyapps.io, precisa chamar pelo library
-# library (shinyjs)
 # library (shiny)
+# library (shinyjs)
 # library (ggplot2)
+# library (rdrop2)
+
+# função para salvar no Dropbox
+saveData <- function(data) {
+  data <- t(data)
+  # criar um nome único para o arquivo
+  fileName <- sprintf("%s_%s.csv", as.integer(Sys.time()), digest::digest(data))
+  # salvar como arquivo temporário
+  filePath <- file.path(tempdir(), fileName)
+  write.csv(data, filePath, row.names = FALSE, quote = TRUE)
+  # subir para a pasta Coleta no Dropbox
+  drop_upload(filePath, path = 'Coleta', dtoken = token)
+}
+
+# armazenar o token em um objeto para o shiny
+token <- readRDS("tokenfile.RDS")
 
 
 # importar objetos com os itens -------------------------------------------
@@ -49,7 +66,7 @@ shinyServer(function(input, output, session){
   # tempo inicial do item
   tempo_inicial <- reactiveVal(Sys.time())
 
-    shinyjs::logjs('Carrega informações iniciais')
+  shinyjs::logjs('Carrega informações iniciais')
 
   # selecionar item a ser apresentado --------------------------------------------------
 
@@ -116,7 +133,7 @@ shinyServer(function(input, output, session){
     # tempo inicial da resposta do item
     tempo_inicial(Sys.time())
 
-      tela
+    tela
   })
 
   shinyjs::logjs(length(aplicados))
@@ -178,6 +195,14 @@ shinyServer(function(input, output, session){
 
     # para sumir o botão
     if (fim) {
+
+      tab_salvar <- data.frame(
+        resp_itens$resp[-length(resp_itens$resp)],
+        tempo_resposta()
+      )
+
+      saveData(tab_salvar)
+
       # # Salva as respostas
       # con <- mongo(
       #   'colaborador', # mudar aqui
@@ -235,17 +260,17 @@ shinyServer(function(input, output, session){
 
   shinyjs::logjs('Plotar o gráfico')
 
-# plotar tabela com tempo de resposta -------------------------------------
+  # plotar tabela com tempo de resposta -------------------------------------
 
-output$tab_tempo_resposta <- shiny::renderTable({
+  output$tab_tempo_resposta <- shiny::renderTable({
 
-  tab_tempo_resposta <- data.frame(
-    Item = df$item[-nrow(df)],
-    Tempo = tempo_resposta()
-  )
+    tab_tempo_resposta <- data.frame(
+      Item = df$item[-nrow(df)],
+      Tempo = tempo_resposta()
+    )
 
-  tab_tempo_resposta
-})
+    tab_tempo_resposta
+  })
 
   shinyjs::logjs('tab_tempo_resposta')
 
