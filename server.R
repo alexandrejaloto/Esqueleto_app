@@ -43,10 +43,13 @@ shinyServer(function(input, output, session){
   # respostas dos itens
   resp_itens <- reactiveValues(resp = rep(NA, nrow(df)))
 
-  # tempos de resposta
+  # vetor com tempos de resposta
   tempo_resposta <- reactiveVal(c())
 
-  shinyjs::logjs('Carrega informações iniciais')
+  # tempo inicial do item
+  tempo_inicial <- reactiveVal(Sys.time())
+
+    shinyjs::logjs('Carrega informações iniciais')
 
   # selecionar item a ser apresentado --------------------------------------------------
 
@@ -110,11 +113,11 @@ shinyServer(function(input, output, session){
       tela <- c ('Obrigado pela participação')
     }
 
-    tela
-  })
+    # tempo inicial da resposta do item
+    tempo_inicial(Sys.time())
 
-  # tempo inicial da resposta do item
-  tempo_inicial <- Sys.time()
+      tela
+  })
 
   shinyjs::logjs(length(aplicados))
   shinyjs::logjs('it_select')
@@ -137,17 +140,6 @@ shinyServer(function(input, output, session){
     shinyjs::toggleState(id = "submit", condition = mandatoryFilled)
   })
 
-  #   # shinyjs::logjs(input$it)
-  #   #
-  # shiny::observe({
-  #   if (input$it == character(0))
-  #     {
-  #     shinyjs::hide('submit')
-  #   } else {
-  #     shinyjs::show('submit')
-  #   }
-  #
-  # })
   shinyjs::logjs('Desabilita botão em caso de resposta vazia')
 
 
@@ -172,8 +164,8 @@ shinyServer(function(input, output, session){
     aplicados(c(aplicados(), it_select()))
     shinyjs::logjs('Atualiza itens aplicados')
 
-    # atualizar objeto com tempos de resposta
-    tempo_resposta(c(tempo_resposta(), Sys.time() - tempo_inicial))
+    # atualizar vetor com tempos de resposta
+    tempo_resposta(c(tempo_resposta(), Sys.time() - tempo_inicial()))
     shinyjs::logjs('Atualiza tempos de respostas')
 
     shinyjs::logjs(tempo_resposta())
